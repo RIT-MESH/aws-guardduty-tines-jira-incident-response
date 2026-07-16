@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aws-guardduty-tines-jira-incident-response"
+version = "0.1.0"
+description = "Event-driven AWS GuardDuty -> Tines -> Jira security incident-response automation."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Project Contributors" }]
+keywords = ["aws", "guardduty", "tines", "jira", "incident-response", "soar", "security"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Security",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=4",
+    "ruff>=0.5",
+    "black>=24",
+    "mypy>=1.10",
+]
+
+[project.urls]
+Homepage = "https://github.com/example/aws-guardduty-tines-jira-incident-response"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.coverage.run]
+branch = true
+source = ["src/incident_response", "src/lambda_forwarder", "tools", "local_emulator"]
+omit = ["*/__init__.py"]
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tools", "local_emulator", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "N"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["N802", "N803"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.mypy]
+python_version = "3.11"
+packages = ["src.incident_response", "src.lambda_forwarder", "tools", "local_emulator"]
+ignore_missing_imports = true
+warn_unused_ignores = false
+warn_redundant_casts = true
+check_untyped_defs = true

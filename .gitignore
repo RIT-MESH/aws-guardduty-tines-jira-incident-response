@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/crash.log
+terraform/*.tfvars
+!terraform/terraform.tfvars.example
+
+# Local env / secrets
+.env
+.env.local
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
