@@ -1,0 +1,517 @@
+{
+  "name": "AWS GuardDuty -> Jira Incident Response",
+  "description": "Receives Amazon GuardDuty findings via webhook, validates and normalizes them, maps severity to Jira priority, deduplicates by finding id, and creates or updates a Jira incident ticket. Uses credential placeholders; no real secrets.",
+  "mode": "live",
+  "entry_agent": "Receive GuardDuty finding",
+  "credential_placeholders": [
+    "JIRA_BASE_URL",
+    "JIRA_USER_EMAIL",
+    "JIRA_API_TOKEN",
+    "TINES_SHARED_SECRET"
+  ],
+  "agents": [
+    {
+      "name": "Receive GuardDuty finding",
+      "type": "webhook",
+      "options": {
+        "path": "guardduty-finding",
+        "secret_type": "shared_secret",
+        "secret_location": "header",
+        "secret_header_name": "X-Tines-Shared-Secret",
+        "secret": {
+          "credential": "TINES_SHARED_SECRET"
+        }
+      },
+      "position": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "name": "Verify authentication",
+      "type": "event_transformation",
+      "options": {
+        "mode": "message",
+        "message": {
+          "authenticated": "{% if webhook.headers.X-Tines-Shared-Secret != blank %}true{% else %}false{% endif %}",
+          "finding_id": "{{ webhook.body.detail.id | default: '' }}",
+          "source": "{{ webhook.body.source | default: '' }}",
+          "detail_type": "{{ webhook.body.['detail-type'] | default: '' }}"
+        }
+      },
+      "sources": [
+        "Receive GuardDuty finding"
+      ],
+      "position": {
+        "x": 2,
+        "y": 1
+      }
+    },
+    {
+      "name": "Is well-formed GuardDuty event",
+      "type": "trigger",
+      "options": {
+        "rules": [
+          {
+            "type": "value",
+            "value": "{{ Verify authentication.authenticated }}",
+            "op": "==",
+            "value_to_compare": "true"
+          },
+          {
+            "type": "value",
+            "value": "{{ Verify authentication.source }}",
+            "op": "==",
+            "value_to_compare": "aws.guardduty"
+          },
+          {
+            "type": "value",
+            "value": "{{ Verify authentication.detail_type }}",
+            "op": "==",
+            "value_to_compare": "GuardDuty Finding"
+          },
+          {
+            "type": "value",
+            "value": "{{ Verify authentication.finding_id }}",
+            "op": "!=",
+            "value_to_compare": ""
+          }
+        ]
+      },
+      "sources": [
+        "Verify authentication"
+      ],
+      "position": {
+        "x": 3,
+        "y": 1
+      }
+    },
+    {
+      "name": "Normalize finding",
+      "type": "event_transformation",
+      "options": {
+        "mode": "message",
+        "message": {
+          "finding_id": "{{ webhook.body.detail.id }}",
+          "finding_type": "{{ webhook.body.detail.type | default: 'unknown' }}",
+          "title": "{{ webhook.body.detail.title | default: webhook.body.detail.type }}",
+          "description": "{{ webhook.body.detail.description | default: '' }}",
+          "severity_score": "{{ webhook.body.detail.severity | default: 0 }}",
+          "aws_account_id": "{{ webhook.body.detail.accountId | default: 'unknown' }}",
+          "aws_region": "{{ webhook.body.detail.region | default: 'unknown' }}",
+          "first_seen": "{{ webhook.body.detail.service.eventFirstSeen | default: '' }}",
+          "last_seen": "{{ webhook.body.detail.service.eventLastSeen | default: '' }}",
+          "resources": "{{ webhook.body.detail.resource | default: '' }}",
+          "service_action": "{{ webhook.body.detail.service.action | default: '' }}"
+        }
+      },
+      "sources": [
+        "Is well-formed GuardDuty event"
+      ],
+      "position": {
+        "x": 4,
+        "y": 1
+      }
+    },
+    {
+      "name": "Extract resource details",
+      "type": "event_transformation",
+      "options": {
+        "mode": "message",
+        "message": {
+          "resource_json": "{{ Normalize finding.resources | to_json }}",
+          "service_action_json": "{{ Normalize finding.service_action | to_json }}",
+          "has_resources": "{% if Normalize finding.resources != blank %}true{% else %}false{% endif %}"
+        }
+      },
+      "sources": [
+        "Normalize finding"
+      ],
+      "position": {
+        "x": 5,
+        "y": 1
+      }
+    },
+    {
+      "name": "Map severity to priority",
+      "type": "event_transformation",
+      "options": {
+        "mode": "message",
+        "message": {
+          "priority": "{% assign s = Normalize finding.severity_score | to_number %}{% if s >= 8.0 %}Highest{% elsif s >= 6.0 %}High{% elsif s >= 2.0 %}Medium{% else %}Low{% endif %}",
+          "severity_label": "{% assign s = Normalize finding.severity_score | to_number %}{% if s >= 8.0 %}Critical{% elsif s >= 6.0 %}High{% elsif s >= 2.0 %}Medium{% else %}Low{% endif %}"
+        }
+      },
+      "sources": [
+        "Normalize finding"
+      ],
+      "position": {
+        "x": 6,
+        "y": 1
+      }
+    },
+    {
+      "name": "Generate deduplication key",
+      "type": "event_transformation",
+      "options": {
+        "mode": "message",
+        "message": {
+          "dedup_key": "{{ Normalize finding.finding_id | sha256 | slice: 0, 16 | prepend: 'gd-' }}"
+        }
+      },
+      "sources": [
+        "Normalize finding"
+      ],
+      "position": {
+        "x": 7,
+        "y": 1
+      }
+    },
+    {
+      "name": "Build JQL search",
+      "type": "event_transformation",
+      "options": {
+        "mode": "message",
+        "message": {
+          "jql": "project = SEC AND labels = \"{{ Generate deduplication key.dedup_key }}\""
+        }
+      },
+      "sources": [
+        "Generate deduplication key"
+      ],
+      "position": {
+        "x": 8,
+        "y": 1
+      }
+    },
+    {
+      "name": "Search Jira for existing issue",
+      "type": "http_request",
+      "options": {
+        "url": "{{ credential.JIRA_BASE_URL }}/rest/api/3/search",
+        "method": "get",
+        "headers": {
+          "Authorization": "Basic {{ credential.JIRA_USER_EMAIL | append: ':' | append: credential.JIRA_API_TOKEN | base64encode }}",
+          "Accept": "application/json"
+        },
+        "query": {
+          "jql": "{{ Build JQL search.jql }}",
+          "fields": "id,key,summary,status"
+        }
+      },
+      "sources": [
+        "Build JQL search"
+      ],
+      "position": {
+        "x": 9,
+        "y": 1
+      }
+    },
+    {
+      "name": "Issue already exists",
+      "type": "trigger",
+      "options": {
+        "rules": [
+          {
+            "type": "value",
+            "value": "{{ Search Jira for existing issue.body.total | to_number }}",
+            "op": ">",
+            "value_to_compare": "0"
+          }
+        ]
+      },
+      "sources": [
+        "Search Jira for existing issue"
+      ],
+      "position": {
+        "x": 10,
+        "y": 1
+      }
+    },
+    {
+      "name": "Build ADF description",
+      "type": "event_transformation",
+      "options": {
+        "mode": "message",
+        "message": {
+          "description": {
+            "type": "doc",
+            "version": 1,
+            "content": [
+              {
+                "type": "heading",
+                "attrs": {
+                  "level": 2
+                },
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Executive summary"
+                  }
+                ]
+              },
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "{{ Normalize finding.description }}"
+                  }
+                ]
+              },
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Finding ID: {{ Normalize finding.finding_id }}"
+                  }
+                ]
+              },
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Severity: {{ Map severity to priority.severity_label }}"
+                  }
+                ]
+              },
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "AWS account: {{ Normalize finding.aws_account_id }}"
+                  }
+                ]
+              },
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "AWS region: {{ Normalize finding.aws_region }}"
+                  }
+                ]
+              },
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Deduplication key: {{ Generate deduplication key.dedup_key }}"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "sources": [
+        "Map severity to priority",
+        "Generate deduplication key"
+      ],
+      "position": {
+        "x": 9,
+        "y": 2
+      }
+    },
+    {
+      "name": "Build create issue payload",
+      "type": "event_transformation",
+      "options": {
+        "mode": "message",
+        "message": {
+          "fields": {
+            "project": {
+              "key": "SEC"
+            },
+            "summary": "[GuardDuty][{{ Map severity to priority.severity_label }}][{{ Normalize finding.aws_account_id }}][{{ Normalize finding.aws_region }}] {{ Normalize finding.title }}",
+            "description": "{{ Build ADF description.description }}",
+            "issuetype": {
+              "name": "Incident"
+            },
+            "priority": {
+              "name": "{{ Map severity to priority.priority }}"
+            },
+            "labels": [
+              "guardduty",
+              "aws-security",
+              "automated-incident",
+              "severity-{{ Map severity to priority.severity_label | downcase }}",
+              "{{ Generate deduplication key.dedup_key }}"
+            ]
+          }
+        }
+      },
+      "sources": [
+        "Build ADF description"
+      ],
+      "position": {
+        "x": 10,
+        "y": 2
+      }
+    },
+    {
+      "name": "Create Jira issue",
+      "type": "http_request",
+      "options": {
+        "url": "{{ credential.JIRA_BASE_URL }}/rest/api/3/issue",
+        "method": "post",
+        "headers": {
+          "Authorization": "Basic {{ credential.JIRA_USER_EMAIL | append: ':' | append: credential.JIRA_API_TOKEN | base64encode }}",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "payload": "{{ Build create issue payload | to_json }}"
+      },
+      "sources": [
+        "Build create issue payload"
+      ],
+      "position": {
+        "x": 11,
+        "y": 2
+      }
+    },
+    {
+      "name": "Add duplicate comment",
+      "type": "http_request",
+      "options": {
+        "url": "{{ Search Jira for existing issue.body.issues[0].key | prepend: '{{ credential.JIRA_BASE_URL }}/rest/api/3/issue/' | append: '/comment' }}",
+        "method": "post",
+        "headers": {
+          "Authorization": "Basic {{ credential.JIRA_USER_EMAIL | append: ':' | append: credential.JIRA_API_TOKEN | base64encode }}",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "payload": {
+          "body": {
+            "type": "doc",
+            "version": 1,
+            "content": [
+              {
+                "type": "paragraph",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "GuardDuty finding recurrence: {{ Normalize finding.finding_id }} (last seen {{ Normalize finding.last_seen }})"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "sources": [
+        "Issue already exists"
+      ],
+      "position": {
+        "x": 11,
+        "y": 1
+      }
+    },
+    {
+      "name": "Transition issue to Investigating",
+      "type": "http_request",
+      "options": {
+        "url": "{{ Create Jira issue.body.key | default: Search Jira for existing issue.body.issues[0].key | prepend: '{{ credential.JIRA_BASE_URL }}/rest/api/3/issue/' | append: '/transitions' }}",
+        "method": "post",
+        "headers": {
+          "Authorization": "Basic {{ credential.JIRA_USER_EMAIL | append: ':' | append: credential.JIRA_API_TOKEN | base64encode }}",
+          "Accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        "payload": {
+          "transition": {
+            "id": "21"
+          }
+        }
+      },
+      "sources": [
+        "Create Jira issue",
+        "Add duplicate comment"
+      ],
+      "position": {
+        "x": 12,
+        "y": 2
+      }
+    },
+    {
+      "name": "Emit success event",
+      "type": "send_to_agent",
+      "options": {
+        "message": {
+          "status": "success",
+          "finding_id": "{{ Normalize finding.finding_id }}",
+          "issue_key": "{{ Create Jira issue.body.key | default: Search Jira for existing issue.body.issues[0].key }}",
+          "dedup_key": "{{ Generate deduplication key.dedup_key }}"
+        }
+      },
+      "sources": [
+        "Transition issue to Investigating"
+      ],
+      "position": {
+        "x": 13,
+        "y": 2
+      }
+    },
+    {
+      "name": "Emit malformed-event event",
+      "type": "send_to_agent",
+      "options": {
+        "message": {
+          "status": "rejected",
+          "reason": "malformed_or_unauthenticated_event",
+          "finding_id": "{{ Verify authentication.finding_id }}"
+        }
+      },
+      "sources": [
+        "Receive GuardDuty finding"
+      ],
+      "position": {
+        "x": 3,
+        "y": 0
+      }
+    },
+    {
+      "name": "Emit Jira failure event",
+      "type": "send_to_agent",
+      "options": {
+        "message": {
+          "status": "failure",
+          "reason": "jira_api_error",
+          "finding_id": "{{ Normalize finding.finding_id }}",
+          "status_code": "{{ Create Jira issue.status_code | default: Search Jira for existing issue.status_code }}"
+        }
+      },
+      "sources": [
+        "Create Jira issue",
+        "Search Jira for existing issue"
+      ],
+      "position": {
+        "x": 12,
+        "y": 1
+      }
+    },
+    {
+      "name": "Record automation error",
+      "type": "event_transformation",
+      "options": {
+        "mode": "message",
+        "message": {
+          "error": "{{ Emit Jira failure event.status }}: {{ Emit Jira failure event.reason }}",
+          "finding_id": "{{ Emit Jira failure event.finding_id }}",
+          "note": "No credentials, tokens or webhook URLs are included in this record."
+        }
+      },
+      "sources": [
+        "Emit Jira failure event"
+      ],
+      "position": {
+        "x": 13,
+        "y": 1
+      }
+    }
+  ]
+}
