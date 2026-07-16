@@ -1,0 +1,35 @@
+# Example variable values. Copy to terraform.tfvars and adjust.
+# NEVER put real secrets in this file or in version control.
+# Set secret values out-of-band via Secrets Manager (see secrets.tf comments).
+
+aws_region             = "us-east-1"
+environment            = "dev"
+project_name           = "gd-ir"
+
+# Provide the Tines webhook URL. If the URL contains a secret token in the path
+# and you do not want it in Terraform state, enable the Lambda forwarder and
+# resolve the URL from Secrets Manager at runtime instead.
+tines_webhook_url      = ""
+tines_shared_secret    = ""
+tines_auth_header_name = "X-Tines-Shared-Secret"
+
+guardduty_min_severity = 4.0
+
+# Preferred: use the EventBridge API Destination directly.
+# Set to true to use the optional Lambda forwarder instead.
+enable_lambda_forwarder = false
+lambda_source_dir       = "../src"
+lambda_handler          = "lambda_forwarder.handler.lambda_handler"
+lambda_runtime          = "python3.12"
+lambda_timeout_seconds  = 15
+lambda_memory_mb        = 256
+
+jira_project_key = "SEC"
+jira_issue_type  = "Incident"
+
+log_retention_days             = 30
+dlq_message_retention_seconds  = 1209600
+
+tags = {
+  Owner = "security-engineering"
+}
