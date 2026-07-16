@@ -1,0 +1,58 @@
+{
+  "version": "0",
+  "id": "1a2b3c4d-0000-0000-0000-bb2200000000000000000000000000000000000000000000000000000bb2",
+  "detail-type": "GuardDuty Finding",
+  "source": "aws.guardduty",
+  "account": "111122223333",
+  "time": "2026-07-17T12:00:00Z",
+  "region": "us-east-1",
+  "resources": [],
+  "detail": {
+    "schemaVersion": "2.0",
+    "accountId": "111122223333",
+    "region": "us-east-1",
+    "partition": "aws",
+    "id": "bb2200000000000000000000000000000000000000000000000000000bb2",
+    "arn": "arn:aws:guardduty:us-east-1:111122223333:detector/abc123def456/finding/bb2200000000000000000000000000000000000000000000000000000bb2",
+    "type": "UnauthorizedAccess:IAMUser/ConsoleLogin",
+    "title": "AWS account accessed from an IP address not commonly used.",
+    "description": "An AWS IAM user logged in from an IP not previously seen for this principal.",
+    "service": {
+      "serviceName": "guardduty",
+      "detectorId": "abc123def456",
+      "action": {
+        "awsApiCallAction": {
+          "api": "ConsoleLogin",
+          "service": {
+            "name": "signin.amazonaws.com"
+          },
+          "remoteIpDetails": {
+            "ipAddressV4": "203.0.113.55",
+            "country": {
+              "countryName": "Examplestan"
+            },
+            "organization": {
+              "asn": 64500,
+              "asnOrg": "Example Telecom"
+            }
+          },
+          "callerType": "UsernamePassword"
+        }
+      },
+      "eventFirstSeen": "2026-07-17T10:00:00Z",
+      "eventLastSeen": "2026-07-17T11:30:00Z",
+      "eventCount": 3
+    },
+    "severity": 4.0,
+    "createdAt": "2026-07-17T10:05:00Z",
+    "updatedAt": "2026-07-17T11:30:00Z",
+    "resource": {
+      "accessKeyDetails": {
+        "accessKeyId": "AKIAMEDEXAMPLE0002",
+        "principalId": "AIDAMEDEXAMPLE0002",
+        "userName": "demo-user",
+        "userType": "IAMUser"
+      }
+    }
+  }
+}

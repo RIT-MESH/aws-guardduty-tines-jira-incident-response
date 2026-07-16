@@ -1,0 +1,61 @@
+{
+  "version": "0",
+  "id": "1a2b3c4d-0000-0000-0000-aa1100000000000000000000000000000000000000000000000000000aa1",
+  "detail-type": "GuardDuty Finding",
+  "source": "aws.guardduty",
+  "account": "111122223333",
+  "time": "2026-07-17T12:00:00Z",
+  "region": "us-east-1",
+  "resources": [],
+  "detail": {
+    "schemaVersion": "2.0",
+    "accountId": "111122223333",
+    "region": "us-east-1",
+    "partition": "aws",
+    "id": "aa1100000000000000000000000000000000000000000000000000000aa1",
+    "arn": "arn:aws:guardduty:us-east-1:111122223333:detector/abc123def456/finding/aa1100000000000000000000000000000000000000000000000000000aa1",
+    "type": "Recon:EC2/PortProbeUnprotectedPort",
+    "title": "Unprotected port on EC2 instance is being probed by a known malicious host.",
+    "description": "GuardDuty detected that an EC2 instance had an unprotected port probed.",
+    "service": {
+      "serviceName": "guardduty",
+      "detectorId": "abc123def456",
+      "action": {
+        "portProbeAction": {
+          "portProbeDetails": [
+            {
+              "localPortDetails": {
+                "port": 22,
+                "portName": "SSH"
+              },
+              "remoteIpDetails": {
+                "ipAddressV4": "198.51.100.10",
+                "country": {
+                  "countryName": "Exampleland"
+                },
+                "organization": {
+                  "asn": 64500,
+                  "asnOrg": "Example ISP"
+                }
+              }
+            }
+          ],
+          "blocked": false
+        }
+      },
+      "eventFirstSeen": "2026-07-17T10:00:00Z",
+      "eventLastSeen": "2026-07-17T11:30:00Z",
+      "eventCount": 3
+    },
+    "severity": 1.5,
+    "createdAt": "2026-07-17T10:05:00Z",
+    "updatedAt": "2026-07-17T11:30:00Z",
+    "resource": {
+      "instanceDetails": {
+        "instanceId": "i-lowexample0001",
+        "instanceType": "t3.micro",
+        "region": "us-east-1"
+      }
+    }
+  }
+}

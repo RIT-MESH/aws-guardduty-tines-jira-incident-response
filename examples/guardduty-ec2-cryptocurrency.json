@@ -1,0 +1,57 @@
+{
+  "version": "0",
+  "id": "1a2b3c4d-0000-0000-0000-gg7700000000000000000000000000000000000000000000000000000gg7",
+  "detail-type": "GuardDuty Finding",
+  "source": "aws.guardduty",
+  "account": "111122223333",
+  "time": "2026-07-17T12:00:00Z",
+  "region": "us-east-1",
+  "resources": [],
+  "detail": {
+    "schemaVersion": "2.0",
+    "accountId": "111122223333",
+    "region": "us-east-1",
+    "partition": "aws",
+    "id": "gg7700000000000000000000000000000000000000000000000000000gg7",
+    "arn": "arn:aws:guardduty:us-east-1:111122223333:detector/abc123def456/finding/gg7700000000000000000000000000000000000000000000000000000gg7",
+    "type": "CryptoCurrency:EC2/BitcoinTool",
+    "title": "Bitcoin mining tool detected on EC2 instance.",
+    "description": "GuardDuty detected behavior consistent with cryptocurrency mining tooling on an EC2 instance.",
+    "service": {
+      "serviceName": "guardduty",
+      "detectorId": "abc123def456",
+      "action": {
+        "networkConnectionAction": {
+          "connectionDirection": "OUTBOUND",
+          "protocol": "TCP",
+          "remoteIpDetails": {
+            "ipAddressV4": "203.0.113.200",
+            "country": {
+              "countryName": "Example Federation"
+            },
+            "organization": {
+              "asn": 64500,
+              "asnOrg": "Example Pool"
+            }
+          },
+          "remotePortDetails": {
+            "port": 3333
+          }
+        }
+      },
+      "eventFirstSeen": "2026-07-17T10:00:00Z",
+      "eventLastSeen": "2026-07-17T11:30:00Z",
+      "eventCount": 3
+    },
+    "severity": 8.0,
+    "createdAt": "2026-07-17T10:05:00Z",
+    "updatedAt": "2026-07-17T11:30:00Z",
+    "resource": {
+      "instanceDetails": {
+        "instanceId": "i-miningexample01",
+        "instanceType": "c5.xlarge",
+        "region": "us-east-1"
+      }
+    }
+  }
+}

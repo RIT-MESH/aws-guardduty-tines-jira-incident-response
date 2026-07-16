@@ -1,0 +1,29 @@
+{
+  "version": "0",
+  "id": "test-missing-optional",
+  "detail-type": "GuardDuty Finding",
+  "source": "aws.guardduty",
+  "account": "111122223333",
+  "region": "us-east-1",
+  "time": "2026-07-17T12:00:00Z",
+  "resources": [],
+  "detail": {
+    "schemaVersion": "2.0",
+    "accountId": "111122223333",
+    "region": "us-east-1",
+    "partition": "aws",
+    "id": "kk1100000000000000000000000000000000000000000000000000000kk1",
+    "arn": "arn:aws:guardduty:us-east-1:111122223333:detector/abc123def456/finding/kk11",
+    "type": "Recon:EC2/PortProbeUnprotectedPort",
+    "title": "Port probe detected.",
+    "description": "A port probe was detected.",
+    "service": {
+      "serviceName": "guardduty",
+      "detectorId": "abc123def456"
+    },
+    "severity": 2.0,
+    "createdAt": "2026-07-17T10:05:00Z",
+    "updatedAt": "2026-07-17T11:30:00Z",
+    "resource": {}
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "version": "0",
+  "id": "1a2b3c4d-0000-0000-0000-cc3300000000000000000000000000000000000000000000000000000cc3",
+  "detail-type": "GuardDuty Finding",
+  "source": "aws.guardduty",
+  "account": "111122223333",
+  "time": "2026-07-17T12:00:00Z",
+  "region": "us-east-1",
+  "resources": [],
+  "detail": {
+    "schemaVersion": "2.0",
+    "accountId": "111122223333",
+    "region": "us-east-1",
+    "partition": "aws",
+    "id": "cc3300000000000000000000000000000000000000000000000000000cc3",
+    "arn": "arn:aws:guardduty:us-east-1:111122223333:detector/abc123def456/finding/cc3300000000000000000000000000000000000000000000000000000cc3",
+    "type": "Trojan:EC2/TrojanDropper",
+    "title": "Trojan Dropper detected on EC2 instance.",
+    "description": "GuardDuty detected that an EC2 instance exhibited behavior consistent with a trojan dropper.",
+    "service": {
+      "serviceName": "guardduty",
+      "detectorId": "abc123def456",
+      "action": {
+        "networkConnectionAction": {
+          "connectionDirection": "OUTBOUND",
+          "protocol": "TCP",
+          "remoteIpDetails": {
+            "ipAddressV4": "192.0.2.20",
+            "country": {
+              "countryName": "Example Republic"
+            },
+            "organization": {
+              "asn": 64500,
+              "asnOrg": "Example Hosting"
+            }
+          },
+          "remotePortDetails": {
+            "port": 443
+          },
+          "localPortDetails": {
+            "port": 54321
+          }
+        }
+      },
+      "eventFirstSeen": "2026-07-17T10:00:00Z",
+      "eventLastSeen": "2026-07-17T11:30:00Z",
+      "eventCount": 3
+    },
+    "severity": 7.5,
+    "createdAt": "2026-07-17T10:05:00Z",
+    "updatedAt": "2026-07-17T11:30:00Z",
+    "resource": {
+      "instanceDetails": {
+        "instanceId": "i-highexample0001",
+        "instanceType": "t3.small",
+        "region": "us-east-1"
+      }
+    }
+  }
+}

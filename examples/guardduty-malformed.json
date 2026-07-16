@@ -1,0 +1,9 @@
+{
+  "version": "0",
+  "id": "broken",
+  "detail-type": "Something Else",
+  "source": "aws.ec2",
+  "detail": {
+    "not": "a finding"
+  }
+}

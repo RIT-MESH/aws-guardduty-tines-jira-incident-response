@@ -1,0 +1,60 @@
+{
+  "version": "0",
+  "id": "1a2b3c4d-0000-0000-0000-dd4400000000000000000000000000000000000000000000000000000dd4",
+  "detail-type": "GuardDuty Finding",
+  "source": "aws.guardduty",
+  "account": "111122223333",
+  "time": "2026-07-17T12:00:00Z",
+  "region": "us-east-1",
+  "resources": [],
+  "detail": {
+    "schemaVersion": "2.0",
+    "accountId": "111122223333",
+    "region": "us-east-1",
+    "partition": "aws",
+    "id": "dd4400000000000000000000000000000000000000000000000000000dd4",
+    "arn": "arn:aws:guardduty:us-east-1:111122223333:detector/abc123def456/finding/dd4400000000000000000000000000000000000000000000000000000dd4",
+    "type": "CredentialAccess:IAMUser/AnomalousBehavior",
+    "title": "IAM user exhibited anomalous credential access behavior.",
+    "description": "An IAM user made API calls associated with credential access that are anomalous for the principal.",
+    "service": {
+      "serviceName": "guardduty",
+      "detectorId": "abc123def456",
+      "action": {
+        "awsApiCallAction": {
+          "api": "GetCredentialReport",
+          "service": {
+            "name": "iam.amazonaws.com"
+          },
+          "remoteIpDetails": {
+            "ipAddressV4": "203.0.113.99",
+            "country": {
+              "countryName": "Exampleia"
+            },
+            "organization": {
+              "asn": 64500,
+              "asnOrg": "Example VPN Co"
+            }
+          }
+        }
+      },
+      "eventFirstSeen": "2026-07-17T10:00:00Z",
+      "eventLastSeen": "2026-07-17T11:30:00Z",
+      "eventCount": 3,
+      "additionalInfo": {
+        "occurrenceCount": 12
+      }
+    },
+    "severity": 9.0,
+    "createdAt": "2026-07-17T10:05:00Z",
+    "updatedAt": "2026-07-17T11:30:00Z",
+    "resource": {
+      "accessKeyDetails": {
+        "accessKeyId": "AKIAMEDEXAMPLE0004",
+        "principalId": "AIDAMEDEXAMPLE0004",
+        "userName": "auditor-demo",
+        "userType": "IAMUser"
+      }
+    }
+  }
+}

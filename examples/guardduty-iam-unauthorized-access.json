@@ -1,0 +1,57 @@
+{
+  "version": "0",
+  "id": "1a2b3c4d-0000-0000-0000-ee5500000000000000000000000000000000000000000000000000000ee5",
+  "detail-type": "GuardDuty Finding",
+  "source": "aws.guardduty",
+  "account": "111122223333",
+  "time": "2026-07-17T12:00:00Z",
+  "region": "us-east-1",
+  "resources": [],
+  "detail": {
+    "schemaVersion": "2.0",
+    "accountId": "111122223333",
+    "region": "us-east-1",
+    "partition": "aws",
+    "id": "ee5500000000000000000000000000000000000000000000000000000ee5",
+    "arn": "arn:aws:guardduty:us-east-1:111122223333:detector/abc123def456/finding/ee5500000000000000000000000000000000000000000000000000000ee5",
+    "type": "UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration",
+    "title": "Credentials used outside AWS infrastructure.",
+    "description": "IAM credentials were used from an IP address outside of AWS infrastructure.",
+    "service": {
+      "serviceName": "guardduty",
+      "detectorId": "abc123def456",
+      "action": {
+        "awsApiCallAction": {
+          "api": "DescribeInstances",
+          "service": {
+            "name": "ec2.amazonaws.com"
+          },
+          "remoteIpDetails": {
+            "ipAddressV4": "198.51.100.77",
+            "country": {
+              "countryName": "Example Islands"
+            },
+            "organization": {
+              "asn": 64500,
+              "asnOrg": "Example Proxy LLC"
+            }
+          }
+        }
+      },
+      "eventFirstSeen": "2026-07-17T10:00:00Z",
+      "eventLastSeen": "2026-07-17T11:30:00Z",
+      "eventCount": 3
+    },
+    "severity": 8.5,
+    "createdAt": "2026-07-17T10:05:00Z",
+    "updatedAt": "2026-07-17T11:30:00Z",
+    "resource": {
+      "accessKeyDetails": {
+        "accessKeyId": "AKIAMEDEXAMPLE0005",
+        "principalId": "AIDAMEDEXAMPLE0005",
+        "userName": "ci-bot-demo",
+        "userType": "IAMUser"
+      }
+    }
+  }
+}

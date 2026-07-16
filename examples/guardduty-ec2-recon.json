@@ -1,0 +1,57 @@
+{
+  "version": "0",
+  "id": "1a2b3c4d-0000-0000-0000-ff6600000000000000000000000000000000000000000000000000000ff6",
+  "detail-type": "GuardDuty Finding",
+  "source": "aws.guardduty",
+  "account": "111122223333",
+  "time": "2026-07-17T12:00:00Z",
+  "region": "us-east-1",
+  "resources": [],
+  "detail": {
+    "schemaVersion": "2.0",
+    "accountId": "111122223333",
+    "region": "us-east-1",
+    "partition": "aws",
+    "id": "ff6600000000000000000000000000000000000000000000000000000ff6",
+    "arn": "arn:aws:guardduty:us-east-1:111122223333:detector/abc123def456/finding/ff6600000000000000000000000000000000000000000000000000000ff6",
+    "type": "Recon:EC2/PortEnumerations",
+    "title": "Port enumeration behavior detected on EC2 instance.",
+    "description": "GuardDuty detected port enumeration behavior on an EC2 instance.",
+    "service": {
+      "serviceName": "guardduty",
+      "detectorId": "abc123def456",
+      "action": {
+        "networkConnectionAction": {
+          "connectionDirection": "OUTBOUND",
+          "protocol": "TCP",
+          "remoteIpDetails": {
+            "ipAddressV4": "192.0.2.50",
+            "country": {
+              "countryName": "Example Kingdom"
+            },
+            "organization": {
+              "asn": 64500,
+              "asnOrg": "Example Scan Inc"
+            }
+          },
+          "remotePortDetails": {
+            "port": 8080
+          }
+        }
+      },
+      "eventFirstSeen": "2026-07-17T10:00:00Z",
+      "eventLastSeen": "2026-07-17T11:30:00Z",
+      "eventCount": 3
+    },
+    "severity": 2.5,
+    "createdAt": "2026-07-17T10:05:00Z",
+    "updatedAt": "2026-07-17T11:30:00Z",
+    "resource": {
+      "instanceDetails": {
+        "instanceId": "i-reconexample001",
+        "instanceType": "m5.large",
+        "region": "us-east-1"
+      }
+    }
+  }
+}
