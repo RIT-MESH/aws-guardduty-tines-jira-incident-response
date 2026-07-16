@@ -38,7 +38,7 @@ jobs:
           echo "::warning::This workflow may create AWS resources that incur costs."
           echo "::warning::GuardDuty, EventBridge, SQS, CloudWatch and Secrets Manager may bill per resource/use."
           echo "::warning::Run 'terraform destroy' when finished to avoid ongoing charges."
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
