@@ -1,0 +1,65 @@
+name: Deploy (manual)
+
+# Manual deployment workflow using GitHub OpenID Connect (no long-lived keys).
+# Does NOT run automatically from pull requests.
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment (e.g. dev, prod)"
+        required: true
+        default: dev
+        type: choice
+        options: [dev, staging, prod]
+      apply:
+        description: "Run terraform apply (otherwise plan only)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write   # required for OIDC
+
+concurrency:
+  group: deploy-${{ github.event.inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Terraform plan/apply (${{ github.event.inputs.environment }})
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Cost warning
+        run: |
+          echo "::warning::This workflow may create AWS resources that incur costs."
+          echo "::warning::GuardDuty, EventBridge, SQS, CloudWatch and Secrets Manager may bill per resource/use."
+          echo "::warning::Run 'terraform destroy' when finished to avoid ongoing charges."
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+          terraform_wrapper: false
+      - working-directory: terraform
+        run: terraform init
+      - name: Terraform plan
+        working-directory: terraform
+        run: terraform plan -no-color -out=tfplan
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ github.event.inputs.environment }}
+          path: terraform/tfplan
+          retention-days: 7
+      - name: Terraform apply (only if requested)
+        if: ${{ github.event.inputs.apply == 'true' }}
+        working-directory: terraform
+        run: terraform apply -auto-approve -no-color tfplan

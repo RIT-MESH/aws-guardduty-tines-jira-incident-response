@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python lint, types, tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[dev]"
+      - run: ruff check .
+      - run: black --check .
+      - run: mypy src tools local_emulator
+      - run: python -m pytest -q
+      - name: Coverage
+        run: |
+          python -m pytest --cov=src/incident_response --cov=src/lambda_forwarder --cov=tools --cov=local_emulator --cov-report=term-missing --cov-fail-under=85
+      - name: CLI dry-run
+        run: python -m tools.simulate_finding --input examples/guardduty-high-severity.json --dry-run
+
+  json-validate:
+    name: Validate JSON (examples + tines)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate all JSON files
+        run: |
+          import glob, json, sys
+          ok = True
+          for p in sorted(glob.glob("examples/*.json") + glob.glob("tines/*.json")):
+              try:
+                  json.load(open(p, encoding="utf-8"))
+                  print("OK", p)
+              except Exception as e:
+                  ok = False
+                  print("FAIL", p, e)
+          sys.exit(0 if ok else 1)
+        shell: python
+
+  terraform:
+    name: Terraform fmt + validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+          terraform_wrapper: false
+      - working-directory: terraform
+        run: terraform fmt -check -recursive
+      - working-directory: terraform
+        run: terraform init -backend=false
+      - working-directory: terraform
+        run: terraform validate -no-color
+
+  markdown-links:
+    name: Markdown relative link check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check relative .md links
+        run: |
+          import os, re, sys
+          root = os.getcwd(); missing = []; checked = 0
+          for dp, _, fs in os.walk(root):
+              if '.git' in dp: continue
+              for fn in fs:
+                  if not fn.endswith('.md'): continue
+                  if fn.startswith('CONTINUATION_STATUS'): continue
+                  if fn.startswith('CHANGELOG'): continue
+                  text = open(os.path.join(dp, fn), encoding='utf-8').read()
+                  for m in re.finditer(r'\]\(([^)#]+?\.md)(?:#[^)]*)?\)', text):
+                      t = m.group(1)
+                      if t.startswith('http'): continue
+                      checked += 1
+                      if not os.path.exists(os.path.normpath(os.path.join(dp, t))):
+                          missing.append(f"{fn} -> {t}")
+          print("checked:", checked)
+          print("MISSING:", missing if missing else "none")
+          sys.exit(1 if missing else 0)
+        shell: python
+
